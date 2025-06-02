@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Discipline Comparator for Teams</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f6f8fa;
+    color: #222;
+    padding: 1rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  header label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+  }
+
+  input[type="file"] {
+    cursor: pointer;
+  }
+
+  button {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+  button:hover {
+    background-color: #0b58d0;
+  }
+  button:active {
+    background-color: #084db6;
+  }
+
+  #teamsContainer, #disciplineRankingsContainer, #overallRankingContainer {
+    margin-top: 2rem;
+  }
+
+  .team-table, .ranking-table {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 320px;
+  }
+  th, td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+
+  th {
+    user-select: none;
+  }
+
+  .team-table th {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+  }
+
+  .ranking-table th {
+    background-color: #198754;
+    color: white;
+    font-weight: 600;
+  }
+
+  caption {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    text-align: left;
+    padding-left: 0.5rem;
+  }
+
+  @media (max-width: 500px) {
+    header {
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <label for="jsonFileInput">Import Team JSON (one file per team):</label>
+  <input type="file" id="jsonFileInput" accept=".json" multiple aria-label="Upload multiple team JSON files" />
+  <button id="clearAllBtn" aria-label="Clear All Data">Clear All</button>
+</header>
+
+<main>
+  <section id="teamsContainer" aria-label="Team Results"></section>
+  <section id="disciplineRankingsContainer" aria-label="Discipline Rankings"></section>
+  <section id="overallRankingContainer" aria-label="Overall Team Ranking"></section>
+</main>
+
+<script>
+(() => {
+  const jsonFileInput = document.getElementById('jsonFileInput');
+  const teamsContainer = document.getElementById('teamsContainer');
+  const disciplineRankingsContainer = document.getElementById('disciplineRankingsContainer');
+  const overallRankingContainer = document.getElementById('overallRankingContainer');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+
+  // teams array: each { id, teamName, rows: [{order, time(ms), points(number|null)}] }
+  let loadedTeams = [];
+
+  function generateId() {
+    return 'team-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  function formatTime(ms) {
+    if (ms === null || ms === undefined || isNaN(ms)) return '-';
+    if (ms < 0) ms = 0;
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const hundredths = Math.floor((ms % 1000) / 10);
+    return `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}.${String(hundredths).padStart(2,'0')}`;
+  }
+
+  // Render a team’s result table with discipline rows sorted by order
+  function renderTeam(team) {
+    const container = document.createElement('div');
+    container.className = 'team-table';
+    container.dataset.teamId = team.id;
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr><th colspan="4">${team.teamName}</th></tr>
+      <tr>
+        <th>Discipline</th>
+        <th>Time</th>
+        <th>Points</th>
+        <th>Delete Row</th>
+      </tr>
+    `;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    // sort rows by order asc
+    const sortedRows = [...team.rows].sort((a, b) => a.order - b.order);
+    sortedRows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+
+      const tdDiscipline = document.createElement('td');
+      tdDiscipline.textContent = row.order;
+      tr.appendChild(tdDiscipline);
+
+      const tdTime = document.createElement('td');
+      tdTime.textContent = formatTime(row.time);
+      tr.appendChild(tdTime);
+
+      const tdPoints = document.createElement('td');
+      tdPoints.textContent = (row.points !== null && row.points !== undefined) ? row.points : '-';
+      tr.appendChild(tdPoints);
+
+      const tdDelete = document.createElement('td');
+      const btnDel = document.createElement('button');
+      btnDel.textContent = 'Delete';
+      btnDel.title = `Delete discipline ${row.order} for team "${team.teamName}"`;
+      btnDel.onclick = () => {
+        if(confirm(`Delete discipline ${row.order} from team "${team.teamName}"?`)) {
+          const idx = team.rows.findIndex(r => r.order === row.order);
+          if(idx >= 0) {
+            team.rows.splice(idx, 1);
+            renderAll();
+          }
+        }
+      };
+      tdDelete.appendChild(btnDel);
+      tr.appendChild(tdDelete);
+
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+    teamsContainer.appendChild(container);
+  }
+
+  // Group rows by discipline order for comparison among teams
+  function groupByDiscipline() {
+    // Find all distinct discipline orders
+    const disciplinesSet = new Set();
+    loadedTeams.forEach(team => {
+      team.rows.forEach(row => {
+        disciplinesSet.add(row.order);
+      });
+    });
+    const disciplines = Array.from(disciplinesSet).sort((a,b)=>a-b);
+
+    const disciplineGroups = {};
+    disciplines.forEach(order => {
+      // Collect each team's row for this discipline (or null if missing)
+      disciplineGroups[order] = loadedTeams.map(team => {
+        // Find the row with this order for the team
+        const row = team.rows.find(r => r.order === order);
+        return {
+          teamId: team.id,
+          teamName: team.teamName,
+          time: row && typeof row.time === 'number' && !isNaN(row.time) ? row.time : Infinity,
+          points: row && (row.points !== null && row.points !== undefined) ? row.points : null,
+        };
+      });
+    });
+    return disciplineGroups;
+  }
+
+  // Render discipline rankings: show ranking per discipline with scoring
+  function renderDisciplineRankings(disciplineGroups) {
+    disciplineRankingsContainer.innerHTML = '';
+    if (!disciplineGroups || Object.keys(disciplineGroups).length === 0) return;
+
+    const pointsByPlace = [6,5,4,3,2,1];
+
+    Object.entries(disciplineGroups).forEach(([order, rows]) => {
+      // Sort by points desc, then time asc
+      const sortedRows = [...rows].sort((a,b) => {
+        if(b.points !== a.points) {
+          if(a.points === null) return 1;
+          if(b.points === null) return -1;
+          return b.points - a.points;
+        }
+        return a.time - b.time;
+      });
+
+      // Assign scores by places (top 6)
+      sortedRows.forEach((r,i) => {
+        r.score = (i < pointsByPlace.length) ? pointsByPlace[i] : 0;
+      });
+
+      // Create table container
+      const container = document.createElement('div');
+      container.className = 'ranking-table';
+
+      const table = document.createElement('table');
+      const caption = document.createElement('caption');
+      caption.textContent = `Discipline ${order} Ranking`;
+      table.appendChild(caption);
+
+      const thead = document.createElement('thead');
+      thead.innerHTML = `
+        <tr>
+          <th>Place</th>
+          <th>Team</th>
+          <th>Points</th>
+          <th>Time</th>
+          <th>Score</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+
+      sortedRows.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${row.teamName}</td>
+          <td>${row.points !== null ? row.points : '-'}</td>
+          <td>${row.time === Infinity ? '-' : formatTime(row.time)}</td>
+          <td>${row.score}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+      disciplineRankingsContainer.appendChild(container);
+    });
+  }
+
+  // Calculate and render overall ranking across all disciplines
+  function renderOverallRanking(disciplineGroups) {
+    overallRankingContainer.innerHTML = '';
+    if (loadedTeams.length === 0) return;
+
+    // Aggregate total scores per team from all disciplines
+    const teamScoresMap = {};
+    loadedTeams.forEach(t => teamScoresMap[t.id] = {teamName: t.teamName, totalScore:0});
+
+    // Sum scores from disciplineGroups
+    Object.values(disciplineGroups).forEach(rows => {
+      rows.forEach(row => {
+        if (teamScoresMap[row.teamId]) {
+          teamScoresMap[row.teamId].totalScore += row.score || 0;
+        }
+      });
+    });
+
+    // Create ranking array and sort desc by totalScore
+    const ranking = Object.entries(teamScoresMap).map(([teamId, data]) => ({
+      teamId,
+      teamName: data.teamName,
+      totalScore: data.totalScore,
+    }));
+    ranking.sort((a,b) => b.totalScore - a.totalScore);
+
+    const container = document.createElement('div');
+    container.className = 'ranking-table';
+
+    const table = document.createElement('table');
+    const caption = document.createElement('caption');
+    caption.textContent = 'Overall Team Ranking (Sum of Discipline Scores)';
+    table.appendChild(caption);
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>Rank</th>
+        <th>Team</th>
+        <th>Total Score</th>
+      </tr>
+    `;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    ranking.forEach((team, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${team.teamName}</td>
+        <td>${team.totalScore}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+    overallRankingContainer.appendChild(container);
+  }
+
+  // Render all views: teams tables, discipline rankings, overall ranking
+  function renderAll() {
+    teamsContainer.innerHTML = '';
+    loadedTeams.forEach(renderTeam);
+    const disciplineGroups = groupByDiscipline();
+    renderDisciplineRankings(disciplineGroups);
+    renderOverallRanking(disciplineGroups);
+  }
+
+  function loadTeamFromJson(jsonObj, sourceName = '') {
+    if (!jsonObj || typeof jsonObj !== 'object') {
+      alert('Invalid JSON format.');
+      return null;
+    }
+    const teamName = jsonObj.teamName || sourceName || 'Unnamed Team';
+    let rawRows = jsonObj.rows || [];
+    if (!Array.isArray(rawRows)) {
+      alert('JSON rows field must be an array.');
+      return null;
+    }
+    // Extract order, time, points; normalize time to ms if string
+    const rows = rawRows.map(r => {
+      let orderNum = null;
+      if (typeof r.order === 'number' && r.order > 0) {
+        orderNum = r.order;
+      } else if (typeof r.order === 'string') {
+        const parsedOrder = parseInt(r.order, 10);
+        orderNum = isNaN(parsedOrder) ? null : parsedOrder;
+      }
+      if (orderNum === null) return null; // skip invalid row
+
+      let timeMs = null;
+      if (typeof r.time === 'number' && !isNaN(r.time)) {
+        timeMs = r.time;
+      } else if (typeof r.time === 'string') {
+        const parsed = parseTimeStringToMs(r.time);
+        timeMs = parsed >= 0 ? parsed : null;
+      }
+
+      let pointsNum = null;
+      if (typeof r.points === 'number') pointsNum = r.points;
+      else if (typeof r.points === 'string') {
+        const parsedPoints = parseInt(r.points, 10);
+        pointsNum = isNaN(parsedPoints) ? null : parsedPoints;
+      }
+
+      return {order: orderNum, time: timeMs, points: pointsNum};
+    }).filter(r => r !== null);
+
+    return {
+      id: generateId(),
+      teamName,
+      rows,
+    };
+  }
+
+  function parseTimeStringToMs(s) {
+    if (typeof s !== 'string') return -1;
+    const regex = /^(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?$/;
+    const m = regex.exec(s.trim());
+    if(!m) return -1;
+    const minutes = parseInt(m[1],10);
+    const seconds = parseInt(m[2],10);
+    const hundredths = m[3] ? parseInt(m[3].padEnd(2,'0'),10) : 0;
+    if (minutes < 0 || seconds < 0 || seconds > 59 || hundredths < 0 || hundredths > 99) return -1;
+    return ((minutes*60) + seconds)*1000 + hundredths*10;
+  }
+
+  jsonFileInput.addEventListener('change', (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const jsonData = JSON.parse(e.target.result);
+          const team = loadTeamFromJson(jsonData, file.name);
+          if (team) {
+            loadedTeams.push(team);
+            renderAll();
+          }
+        } catch (error) {
+          alert(`Error parsing JSON file "${file.name}": ${error.message}`);
+        }
+      };
+      reader.readAsText(file);
+    });
+    // Clear input so re-uploading same files possible
+    jsonFileInput.value = '';
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    if (confirm('Clear all loaded teams and rankings?')) {
+      loadedTeams = [];
+      renderAll();
+    }
+  });
+
+  // Initial empty render
+  renderAll();
+})();
+</script>
+
+</body>
+</html>

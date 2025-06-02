@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Team Timer App</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f6f8fa;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #0d6efd;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  header input[type="text"] {
+    flex: 1 1 200px;
+    max-width: 300px;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.15);
+  }
+
+  header button {
+    background: #1a73e8;
+    border: none;
+    color: white;
+    padding: 0.55rem 1rem;
+    font-size: 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+
+  header button:hover {
+    background: #145bc9;
+  }
+
+  header button:active {
+    background: #0f4cad;
+  }
+
+  main {
+    flex: 1 0 auto;
+    overflow-x: auto;
+    padding: 1rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 320px;
+  }
+
+  th, td {
+    padding: 0.8rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background-color: #e9ecef;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  td input[type="number"] {
+    width: 70px;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  td input[type="number"]:focus {
+    outline: 2px solid #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  button.small-btn {
+    background: #0d6efd;
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.9rem;
+    margin: 0 2px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+
+  button.small-btn:hover {
+    background: #0b58d0;
+  }
+
+  button.small-btn:active {
+    background: #084db6;
+  }
+
+  button.delete-btn {
+    background: #dc3545;
+    padding: 0.2rem 0.5rem;
+  }
+
+  button.delete-btn:hover {
+    background: #b32431;
+  }
+
+  button.delete-btn:active {
+    background: #891f29;
+  }
+
+  footer {
+    background: #fff;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 -2px 8px rgb(0 0 0 / 0.1);
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  footer button {
+    background: #198754;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+
+  footer button:hover {
+    background: #146c43;
+  }
+
+  footer button:active {
+    background: #0f4e2e;
+  }
+
+  /* Stopwatch icon (simple) */
+  svg.stopwatch-icon {
+    width: 1.2em;
+    height: 1.2em;
+    fill: white;
+    margin-right: 6px;
+  }
+
+  /* Responsive tweaks for small phones */
+  @media (max-width: 400px) {
+    header {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    header input[type="text"] {
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <input id="teamNameInput" type="text" placeholder="Enter team name" aria-label="Team Name" />
+  <button id="addTimerRowBtn" title="Add timer row" aria-label="Add timer row">
+    <svg class="stopwatch-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M176 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l16 0 0 34.4C92.3 113.8 16 200 16 304c0 114.9 93.1 208 208 208s208-93.1 208-208c0-41.8-12.3-80.7-33.5-113.2l24.1-24.1c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L355.7 143c-28.1-23-62.2-38.8-99.7-44.6L256 64l16 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L176 0zM288 204c28.7 0 52 23.3 52 52l0 96c0 28.7-23.3 52-52 52s-52-23.3-52-52l0-96c0-28.7 23.3-52 52-52zm-12 52l0 96c0 6.6 5.4 12 12 12s12-5.4 12-12l0-96c0-6.6-5.4-12-12-12s-12 5.4-12 12zM159.5 244c-5.4 0-10.2 3.5-11.9 8.6l-.6 1.7c-3.5 10.5-14.8 16.1-25.3 12.6s-16.1-14.8-12.6-25.3l.6-1.7c7.2-21.5 27.2-35.9 49.8-35.9c29 0 52.5 23.5 52.5 52.5l0 2.2c0 13.4-4.9 26.4-13.8 36.4l-39 43.9c-6.2 7-10 15.7-10.9 24.9l43.8 0c11 0 20 9 20 20s-9 20-20 20l-64 0c-11 0-20-9-20-20l0-15.7c0-20.6 7.5-40.4 21.2-55.8l39-43.9c2.4-2.7 3.7-6.2 3.7-9.8l0-2.2c0-6.9-5.6-12.5-12.5-12.5z"/></svg>
+  </button>
+  <!--<button id="addPointsOnlyRowBtn" title="Add points row" aria-label="Add points row">+ Points Row</button>-->
+</header>
+
+<main>
+  <table id="teamTable" aria-label="Team data table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Timer</th>
+        <th>Start / Stop</th>
+        <th>Reset</th>
+        <th>Points</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- rows will be dynamically added -->
+    </tbody>
+  </table>
+</main>
+
+<footer>
+  <button id="exportBtn" aria-label="Export JSON">Export JSON</button>
+</footer>
+
+<script>
+  (() => {
+    const STORAGE_KEY = 'teamTimerAppData';
+
+    const teamNameInput = document.getElementById('teamNameInput');
+    const addTimerRowBtn = document.getElementById('addTimerRowBtn');
+    const addPointsOnlyRowBtn = document.getElementById('addPointsOnlyRowBtn');
+    const teamTableBody = document.querySelector('#teamTable tbody');
+    const exportBtn = document.getElementById('exportBtn');
+
+    let rows = [];
+
+    // Only one timer can run at a time
+    function stopAnyOtherRunningTimer(exceptId) {
+      rows.forEach(r => {
+        if (r.running && r.id !== exceptId) {
+          stopTimer(r);
+        }
+      });
+    }
+
+    function createUniqueId() {
+      return 'id-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function formatTime(ms) {
+      if (ms < 0) ms = 0;
+      let totalSeconds = Math.floor(ms / 1000);
+      let minutes = Math.floor(totalSeconds / 60);
+      let seconds = totalSeconds % 60;
+      let hundredths = Math.floor((ms % 1000) / 10);
+      return (
+        String(minutes).padStart(2, '0') + ':' +
+        String(seconds).padStart(2, '0') + '.' +
+        String(hundredths).padStart(2, '0')
+      );
+    }
+
+    function createCell(tag = 'td', props = {}, ...children) {
+      const el = document.createElement(tag);
+      Object.entries(props).forEach(([k,v]) => {
+        if(k === 'className') el.className = v;
+        else if(k === 'dataset') {
+          Object.entries(v).forEach(([key,val]) => el.dataset[key] = val);
+        }
+        else if (k.startsWith('aria')) {
+          el.setAttribute(k, v);
+        }
+        else if(k === 'textContent') {
+          el.textContent = v;
+        } else if(k === 'html') {
+          el.innerHTML = v;
+        } else if (k === 'onclick') {
+          el.onclick = v;
+        } else {
+          el.setAttribute(k, v);
+        }
+      });
+      children.forEach(child => {
+        if(child instanceof Node) el.appendChild(child);
+        else if(child != null) el.appendChild(document.createTextNode(child));
+      });
+      return el;
+    }
+
+    // Timer handling - saves every 1 second on tick
+    function startTimer(rowObj) {
+      if (rowObj.running) return;
+
+      // Stop any other running timers first
+      stopAnyOtherRunningTimer(rowObj.id);
+
+      rowObj.running = true;
+      rowObj.lastUpdateTime = Date.now();
+
+      if(rowObj.intervalId) {
+        clearInterval(rowObj.intervalId);
+      }
+
+      // Track when we last saved to localStorage (1-second granularity)
+      let lastSavedTime = Date.now();
+
+      rowObj.intervalId = setInterval(() => {
+        const now = Date.now();
+        const delta = now - rowObj.lastUpdateTime;
+        rowObj.elapsed += delta;
+        rowObj.lastUpdateTime = now;
+        updateRowTimerDisplay(rowObj);
+        saveState();
+      }, 50);
+
+      updateRowTimerDisplay(rowObj);
+      saveState(); // Save immediately on start
+    }
+
+    function stopTimer(rowObj) {
+      if (!rowObj.running) return;
+      rowObj.running = false;
+      if (rowObj.intervalId) {
+        clearInterval(rowObj.intervalId);
+        rowObj.intervalId = null;
+      }
+      if (rowObj.lastUpdateTime) {
+        const now = Date.now();
+        const delta = now - rowObj.lastUpdateTime;
+        rowObj.elapsed += delta;
+        rowObj.lastUpdateTime = null;
+      }
+      updateRowTimerDisplay(rowObj);
+      saveState();
+    }
+
+    function resetTimer(rowObj) {
+      rowObj.elapsed = 0;
+      rowObj.lastUpdateTime = rowObj.running ? Date.now() : null;
+      updateRowTimerDisplay(rowObj);
+      saveState();
+    }
+
+    function updateRowTimerDisplay(rowObj) {
+      const rowEl = document.querySelector("tr[data-id="+`${rowObj.id}`+"]");
+      if (!rowEl) return;
+      const timeEl = rowEl.querySelector('.time-display');
+      if (timeEl) {
+        timeEl.textContent = formatTime(rowObj.elapsed);
+      }
+      const startStopBtn = rowEl.querySelector('.start-stop-btn');
+      if (startStopBtn) {
+        startStopBtn.textContent = rowObj.running ? 'Stop' : 'Start';
+        startStopBtn.setAttribute('aria-label', rowObj.running ? 'Stop timer' : 'Start timer');
+      }
+    }
+
+    function updateRowOrder() {
+      const trs = teamTableBody.querySelectorAll('tr');
+      trs.forEach((tr, i) => {
+        const orderCell = tr.querySelector('.order-cell');
+        if(orderCell) orderCell.textContent = i + 1;
+      });
+    }
+
+    function onDeleteRow(rowId) {
+      const idx = rows.findIndex(r => r.id === rowId);
+      if (idx === -1) return;
+      if(rows[idx].intervalId) {
+        clearInterval(rows[idx].intervalId);
+      }
+      rows.splice(idx,1);
+      renderRows();
+      updateRowOrder();
+      saveState();
+    }
+
+    function onStartStopTimer(rowId) {
+      const rowObj = rows.find(r => r.id === rowId);
+      if(!rowObj || !rowObj.isTimer) return;
+      if(rowObj.running) stopTimer(rowObj);
+      else startTimer(rowObj);
+    }
+
+    function onResetTimer(rowId) {
+      const rowObj = rows.find(r => r.id === rowId);
+      if(!rowObj || !rowObj.isTimer) return;
+      resetTimer(rowObj);
+    }
+
+    function onPointsChange(rowId, points) {
+      const rowObj = rows.find(r => r.id === rowId);
+      if(!rowObj) return;
+      const parsed = parseInt(points, 10);
+      rowObj.points = isNaN(parsed) ? '' : parsed;
+      saveState();
+    }
+
+    function addTimerRow() {
+      const newRow = {
+        id: createUniqueId(),
+        isTimer: true,
+        elapsed: 0,
+        running: false,
+        points: '',
+        intervalId: null,
+        lastUpdateTime: null,
+      };
+      rows.push(newRow);
+      renderRows();
+      updateRowOrder();
+      saveState();
+    }
+
+    function addPointsOnlyRow() {
+      const newRow = {
+        id: createUniqueId(),
+        isTimer: false,
+        elapsed: 0,
+        running: false,
+        points: '',
+        intervalId: null,
+        lastUpdateTime: null,
+      };
+      rows.push(newRow);
+      renderRows();
+      updateRowOrder();
+      saveState();
+    }
+
+    function renderRows() {
+      teamTableBody.innerHTML = '';
+      rows.forEach((rowObj, idx) => {
+        const tr = createCell('tr', {dataset: {id: rowObj.id}});
+        tr.appendChild(createCell('td', {className: 'order-cell', textContent: idx+1}));
+        if(rowObj.isTimer) {
+          tr.appendChild(createCell('td', {className: 'time-display', 'aria-live': 'polite', 'aria-atomic': 'true', textContent: formatTime(rowObj.elapsed)}));
+        } else {
+          tr.appendChild(createCell('td'));
+        }
+        if(rowObj.isTimer) {
+          const startCell = createCell('td');
+          const btn = document.createElement('button');
+          btn.className = 'small-btn start-stop-btn';
+          btn.textContent = rowObj.running ? 'Stop' : 'Start';
+          btn.setAttribute('aria-label', rowObj.running ? 'Stop timer' : 'Start timer');
+          btn.onclick = () => onStartStopTimer(rowObj.id);
+          startCell.appendChild(btn);
+          tr.appendChild(startCell);
+        } else {
+          tr.appendChild(createCell('td'));
+        }
+        if(rowObj.isTimer) {
+          const resetCell = createCell('td');
+          const btn = document.createElement('button');
+          btn.className = 'small-btn';
+          btn.textContent = 'Reset';
+          btn.setAttribute('aria-label', 'Reset timer');
+          btn.onclick = () => onResetTimer(rowObj.id);
+          resetCell.appendChild(btn);
+          tr.appendChild(resetCell);
+        } else {
+          tr.appendChild(createCell('td'));
+        }
+        const pointsCell = createCell('td');
+        const pointsInput = document.createElement('input');
+        pointsInput.type = 'number';
+        pointsInput.min = '0';
+        pointsInput.value = rowObj.points === '' ? '' : rowObj.points;
+        pointsInput.setAttribute('aria-label', 'Points');
+        pointsInput.oninput = e => onPointsChange(rowObj.id, e.target.value);
+        pointsCell.appendChild(pointsInput);
+        tr.appendChild(pointsCell);
+        const deleteCell = createCell('td');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'small-btn delete-btn';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.setAttribute('aria-label', 'Delete row');
+        deleteBtn.onclick = () => onDeleteRow(rowObj.id);
+        deleteCell.appendChild(deleteBtn);
+        tr.appendChild(deleteCell);
+        teamTableBody.appendChild(tr);
+      });
+
+      // After render start timer intervals for running timers
+      rows.forEach(rowObj => {
+        if(rowObj.isTimer && rowObj.running) {
+          if(rowObj.intervalId) {
+            clearInterval(rowObj.intervalId);
+            rowObj.intervalId = null;
+          }
+          rowObj.lastUpdateTime = Date.now();
+          // Setting up interval with saved elapsed time
+          rowObj.intervalId = setInterval(() => {
+            const now = Date.now();
+            const delta = now - rowObj.lastUpdateTime;
+            rowObj.elapsed += delta;
+            rowObj.lastUpdateTime = now;
+            updateRowTimerDisplay(rowObj);
+            // Save elapsed time every second to localStorage
+            if (!rowObj._lastSave || now - rowObj._lastSave >= 1000) {
+              rowObj._lastSave = now;
+              saveState();
+            }
+          }, 50);
+          updateRowTimerDisplay(rowObj);
+        }
+      });
+    }
+
+    let saveTimeout = null;
+    function saveState() {
+      const data = {
+        teamName: teamNameInput.value.trim(),
+        rows: rows.map(r => {
+          let elapsed = r.elapsed;
+          if(r.running && r.lastUpdateTime) {
+            elapsed += (Date.now() - r.lastUpdateTime);
+          }
+          return {
+            id: r.id,
+            isTimer: r.isTimer,
+            elapsed,
+            running: r.running,
+            points: r.points,
+          };
+        }),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    function saveStateDebounced() {
+      if(saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveState();
+        saveTimeout = null;
+      }, 300);
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if(parsed.teamName) teamNameInput.value = parsed.teamName;
+          if(Array.isArray(parsed.rows)) {
+            rows.forEach(r => {
+              if(r.intervalId) clearInterval(r.intervalId);
+            });
+            rows = parsed.rows.map(r => ({
+              id: r.id,
+              isTimer: r.isTimer,
+              elapsed: r.elapsed || 0,
+              running: r.running || false,
+              points: r.points === undefined ? '' : r.points,
+              intervalId: null,
+              lastUpdateTime: null,
+              _lastSave: null,
+            }));
+            // Stop all timers except one running timer (only one allowed)
+            let runningFound = false;
+            for(let r of rows) {
+              if(r.running) {
+                if(runningFound) {
+                  r.running = false;
+                } else {
+                  runningFound = true;
+                }
+              }
+            }
+            renderRows();
+            updateRowOrder();
+          }
+        } catch(e) {
+          console.warn('Failed to parse saved data', e);
+        }
+      }
+    }
+
+    function exportData() {
+      rows.forEach(r => {
+        if(r.running) stopTimer(r);
+      });
+      const teamName = teamNameInput.value.trim();
+      if(teamName === '') {
+        alert('Please enter a team name before exporting.');
+        return;
+      }
+      const exportRows = rows.map((r,i) => ({
+        order: i + 1,
+        time: formatTime(r.elapsed),
+        points: r.points === '' ? null : r.points,
+      }));
+      const exportData = {
+        teamName,
+        rows: exportRows,
+      };
+      const jsonStr = JSON.stringify(exportData,null,2);
+      const blob = new Blob([jsonStr], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${teamName.replace(/\\s+/g,'_')}_export.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    addTimerRowBtn.addEventListener('click', addTimerRow);
+    addPointsOnlyRowBtn.addEventListener('click', addPointsOnlyRow);
+    teamNameInput.addEventListener('input', saveStateDebounced);
+    exportBtn.addEventListener('click', exportData);
+
+    loadState();
+
+    window.addEventListener('beforeunload', () => {
+      rows.forEach(r=>{
+        if(r.intervalId) clearInterval(r.intervalId);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
+
