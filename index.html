@@ -70,9 +70,8 @@
             <form class="d-flex justify-content-center gap-3">
                 <input id="teamNameInput" class="form-control me-sm-2" type="text" placeholder="Enter team name"
                     aria-label="Team Name" />
-
             </form>
-            <button id="addTimerRowBtn" class="my-2 my-sm-0 btn btn-primary" title="Add timer row"
+            <button id="addTimerRowBtn" class="my-2 my-sm-0 btn btn-light" title="Add timer row"
                 aria-label="Add timer row">
                 +row
             </button>
@@ -87,7 +86,7 @@
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Timer</th>
-                        <th scope="col">Start / Stop</th>
+                        <th scope="col">Toggle</th>
                         <th scope="col">Points</th>
                         <th scope="col">Penalties</th>
                         <th scope="col">Action</th>
@@ -101,7 +100,7 @@
     </main>
 
     <footer class="bg-dark">
-        <button id="exportBtn" class="btn btn-lg btn-primary" aria-label="Export DATA">Export DATA</button>
+        <button id="exportBtn" class="btn btn-lg btn-light fw-bold" aria-label="Export DATA">Export DATA</button>
     </footer>
 
     <script>
@@ -392,7 +391,7 @@
                     penaltiesCell.appendChild(penaltiesCounter);
 
                     const removePenaltyBtn = document.createElement('button');
-                    removePenaltyBtn.className = 'btn btn-secondary text-body-tertiary btn-sm fw-bold';
+                    removePenaltyBtn.className = 'btn btn-secondary text-body-secondary btn-sm fw-bold';
                     removePenaltyBtn.textContent = '-5s';
                     removePenaltyBtn.onclick = () => {
                         if (confirm('Are you sure you want to remove penalty?')) {
