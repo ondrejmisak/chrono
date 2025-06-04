@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Team Timer App</title>
+    <title>👟 BeChrono</title>
     <style>
         body {
             margin: 0;
@@ -69,30 +69,31 @@
         <div class="container-fluid">
             <form class="d-flex justify-content-center gap-3">
                 <input id="teamNameInput" class="form-control me-sm-2" type="text" placeholder="Enter team name"
-                    aria-label="Team Name"/>
-                
+                    aria-label="Team Name" />
+
             </form>
-            <button id="addTimerRowBtn" class="my-2 my-sm-0 btn btn-primary" title="Add timer row" aria-label="Add timer row">
-                    +row
-                </button>
+            <button id="addTimerRowBtn" class="my-2 my-sm-0 btn btn-primary" title="Add timer row"
+                aria-label="Add timer row">
+                +row
+            </button>
         </div>
     </nav>
 
     <main class="">
         <div class="table-responsive">
-            <table id="teamTable" class="table table-sm table-striped table-bordered " aria-label="Team data table">
+            <table id="teamTable" class="table table-sm table-striped table-bordered text-center"
+                aria-label="Team data table">
                 <thead class="thead-dark">
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Timer</th>
                         <th scope="col">Start / Stop</th>
-                        <th scope="col">Reset</th>
                         <th scope="col">Points</th>
                         <th scope="col">Penalties</th>
-                        <th scope="col">Delete</th>
+                        <th scope="col">Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="align-middle">
 
                 </tbody>
             </table>
@@ -100,7 +101,7 @@
     </main>
 
     <footer class="bg-dark">
-        <button id="exportBtn" class="btn btn-lg btn-primary" aria-label="Export JSON">Export JSON</button>
+        <button id="exportBtn" class="btn btn-lg btn-primary" aria-label="Export DATA">Export DATA</button>
     </footer>
 
     <script>
@@ -298,6 +299,9 @@
             function removePenalty(rowId) {
                 const rowObj = rows.find(r => r.id === rowId);
                 if (!rowObj) return;
+                if (rowObj.elapsed <= 0) return;
+                if (rowObj.penalties <= 0) return;
+
                 rowObj.elapsed -= 5000; // Remove 5 seconds
                 rowObj.penalties = Math.max(0, rowObj.penalties - 1); // Decrement penalties
                 updateRowTimerDisplay(rowObj);
@@ -341,16 +345,16 @@
                 teamTableBody.innerHTML = '';
                 rows.forEach((rowObj, idx) => {
                     const tr = createCell('tr', { dataset: { id: rowObj.id } });
-                    tr.appendChild(createCell('td', { className: 'order-cell badge rounded-pill bg-secondary', textContent: idx + 1 }));
+                    tr.appendChild(createCell('td', { className: 'order-cell bg-active h1', textContent: idx + 1 }));
                     if (rowObj.isTimer) {
-                        tr.appendChild(createCell('td', { className: 'time-display', 'aria-live': 'polite', 'aria-atomic': 'true', textContent: formatTime(rowObj.elapsed) }));
+                        tr.appendChild(createCell('td', { className: 'time-display fw-bold', 'aria-live': 'polite', 'aria-atomic': 'true', textContent: formatTime(rowObj.elapsed) }));
                     } else {
                         tr.appendChild(createCell('td'));
                     }
                     if (rowObj.isTimer) {
-                        const startCell = createCell('td');
+                        const startCell = createCell('td', { className: 'align-middle' });
                         const btn = document.createElement('button');
-                        btn.className = 'start-stop-btn btn ';
+                        btn.className = 'start-stop-btn btn fw-bold';
                         btn.textContent = rowObj.running ? 'Stop' : 'Start';
                         btn.classList.toggle(rowObj.running ? 'btn-danger' : 'btn-success');
                         btn.setAttribute('aria-label', rowObj.running ? 'Stop timer' : 'Start timer');
@@ -360,26 +364,10 @@
                     } else {
                         tr.appendChild(createCell('td'));
                     }
-                    if (rowObj.isTimer) {
-                        const resetCell = createCell('td');
-                        const btn = document.createElement('button');
-                        btn.className = 'btn btn-warning btn-sm';
-                        btn.textContent = 'Reset';
-                        btn.setAttribute('aria-label', 'Reset timer');
 
-                        btn.onclick = () => {
-                            if (confirm('Are you sure you want to reset the timer?')) {
-                                onResetTimer(rowObj.id);
-                            }
-                        };
-
-                        resetCell.appendChild(btn);
-                        tr.appendChild(resetCell);
-                    } else {
-                        tr.appendChild(createCell('td'));
-                    }
                     const pointsCell = createCell('td');
                     const pointsInput = document.createElement('input');
+                    pointsInput.className = 'form-control form-control-lg text-center';
                     pointsInput.type = 'number';
                     pointsInput.min = '0';
                     pointsInput.value = rowObj.points === '' ? '' : rowObj.points;
@@ -390,27 +378,63 @@
 
                     const penaltiesCell = createCell('td');
 
-                    const penaltiesCounter = createCell('p', { className: 'penaltiesCounter', textContent: rowObj.penalties });
-                    penaltiesCell.appendChild(penaltiesCounter);
-
                     const addPenaltyBtn = document.createElement('button');
+                    addPenaltyBtn.className = 'btn btn-dark btn-sm text-danger fw-bold';
                     addPenaltyBtn.textContent = '+5s';
-                    addPenaltyBtn.onclick = () => addPenalty(rowObj.id);
+                    addPenaltyBtn.onclick = () => {
+                        if (confirm('Are you sure you want to add penalty?')) {
+                            addPenalty(rowObj.id);
+                        }
+                    };
                     penaltiesCell.appendChild(addPenaltyBtn);
 
+                    const penaltiesCounter = createCell('div', { className: 'penaltiesCounter text-danger', textContent: rowObj.penalties });
+                    penaltiesCell.appendChild(penaltiesCounter);
+
                     const removePenaltyBtn = document.createElement('button');
+                    removePenaltyBtn.className = 'btn btn-secondary text-body-tertiary btn-sm fw-bold';
                     removePenaltyBtn.textContent = '-5s';
-                    removePenaltyBtn.onclick = () => removePenalty(rowObj.id);
+                    removePenaltyBtn.onclick = () => {
+                        if (confirm('Are you sure you want to remove penalty?')) {
+                            removePenalty(rowObj.id);
+                        }
+                    };
                     penaltiesCell.appendChild(removePenaltyBtn);
 
                     tr.appendChild(penaltiesCell);
 
-                    const deleteCell = createCell('td');
+                    const deleteCell = createCell('td', { className: '' });
+
+
+                    if (rowObj.isTimer) {
+                        //const resetCell = createCell('td');
+                        const btn = document.createElement('button');
+                        btn.className = 'btn btn-warning btn-sm fw-bold';
+                        btn.textContent = 'Reset';
+                        btn.setAttribute('aria-label', 'Reset timer');
+
+                        btn.onclick = () => {
+                            if (confirm('Are you sure you want to reset the timer?')) {
+                                onResetTimer(rowObj.id);
+                            }
+                        };
+
+                        deleteCell.appendChild(btn);
+                        //tr.appendChild(resetCell);
+                    } else {
+                        //tr.appendChild(createCell('td'));
+                    }
+
+                    const spliter = createCell('div');
+                    spliter.innerHTML = '&nbsp;';
+                    deleteCell.appendChild(spliter);
+
+
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'small-btn delete-btn';
+                    deleteBtn.className = 'btn btn-danger btn-sm fw-bold';
                     deleteBtn.textContent = 'Delete';
                     deleteBtn.setAttribute('aria-label', 'Delete row');
-                    
+
                     deleteBtn.onclick = () => {
                         if (confirm('Are you sure you want to delete the timer?')) {
                             onDeleteRow(rowObj.id);
@@ -565,7 +589,6 @@
             });
         })();
     </script>
-
 </body>
 
 </html>
