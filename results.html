@@ -4,58 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Discipline Comparator for Teams</title>
+    <title>👟 results | BeChrono</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
-        body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background: #f6f8fa;
-            color: #222;
-            padding: 1rem;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            justify-content: center;
-        }
-
-        header label {
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        input[type="file"] {
-            cursor: pointer;
-        }
-
-        button {
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            user-select: none;
-            transition: background-color 0.2s ease;
-        }
-
-        button:hover {
-            background-color: #0b58d0;
-        }
-
-        button:active {
-            background-color: #084db6;
-        }
 
         #teamsContainer,
         #disciplineRankingsContainer,
@@ -71,40 +22,13 @@
             overflow-x: auto;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 320px;
-        }
-
-        th,
-        td {
-            padding: 0.75rem 0.5rem;
-            border-bottom: 1px solid #ddd;
-            text-align: center;
-        }
-
-        th {
-            user-select: none;
-        }
-
-        .team-table th {
-            background-color: #0d6efd;
-            color: white;
-            font-weight: 600;
-        }
-
-        .ranking-table th {
-            background-color: #198754;
-            color: white;
-            font-weight: 600;
-        }
+       
 
         caption {
             font-weight: 700;
             font-size: 1.2rem;
             margin-bottom: 0.5rem;
-            text-align: left;
+            text-align: center !important;
             padding-left: 0.5rem;
         }
 
@@ -113,18 +37,41 @@
                 flex-direction: column;
             }
         }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: #f6f8fa;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
     </style>
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 
 <body>
 
-    <header>
-        <label for="jsonFileInput">Import Team JSON (one file per team):</label>
-        <input type="file" id="jsonFileInput" accept=".json" multiple aria-label="Upload multiple team JSON files" />
-        <button id="clearAllBtn" aria-label="Clear All Data">Clear All</button>
-    </header>
+    <!--<header class="bg-dark p-2">
+        <div class="mb-3">
+            <label for="jsonFileInput" class="form-label">Import Team JSON (one file per team):</label>
+            <input type="file" id="jsonFileInput" class="form-control" accept=".json" multiple aria-label="Upload multiple team JSON files" />
+        </div>
+        <button id="clearAllBtn" class="my-2 my-sm-0 btn btn-light" aria-label="Clear All Data">Clear All</button>
+    </header>-->
 
-    <main>
+    <nav class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
+        <div class="container-fluid">
+            <form class="d-flex justify-content-center gap-3">
+                <div class="">
+                    <input type="file" id="jsonFileInput" class="form-control form-control-sm" accept=".json" multiple aria-label="Upload multiple team JSON files" />
+                </div>
+            </form>
+            <button id="clearAllBtn" class="my-2 my-sm-0 btn btn-light" aria-label="Clear All Data">Clear All</button>
+        </div>
+    </nav>
+
+    <main class="text-center fw-bold container-fluid">
         <section id="overallRankingContainer" aria-label="Overall Team Ranking"></section>
         <section id="disciplineRankingsContainer" aria-label="Discipline Rankings"></section>
         <section id="teamsContainer" aria-label="Team Results"></section>
@@ -162,6 +109,7 @@
                 container.dataset.teamId = team.id;
 
                 const table = document.createElement('table');
+                table.className = 'table table-success caption-top caption-top table-sm table-striped table-bordered text-center';
                 const thead = document.createElement('thead');
                 thead.innerHTML = `
       <tr><th colspan="4">${team.teamName}</th></tr>
@@ -194,6 +142,7 @@
 
                     const tdDelete = document.createElement('td');
                     const btnDel = document.createElement('button');
+                    btnDel.className = 'btn btn-danger btn-sm'
                     btnDel.textContent = 'Delete';
                     btnDel.title = `Delete discipline ${row.order} for team "${team.teamName}"`;
                     btnDel.onclick = () => {
@@ -272,6 +221,7 @@
                     container.className = 'ranking-table';
 
                     const table = document.createElement('table');
+                    table.className = 'table table-primary caption-top caption-top table-sm table-striped table-bordered text-center';
                     const caption = document.createElement('caption');
                     caption.textContent = `Discipline ${order} Ranking`;
                     table.appendChild(caption);
@@ -337,8 +287,9 @@
                 container.className = 'ranking-table';
 
                 const table = document.createElement('table');
+                table.className = 'table table-warning caption-top table-sm table-striped table-bordered text-center';
                 const caption = document.createElement('caption');
-                caption.textContent = 'Overall Team Ranking (Sum of Discipline Scores)';
+                caption.textContent = 'Overall Team Ranking';
                 table.appendChild(caption);
 
                 const thead = document.createElement('thead');
